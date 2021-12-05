@@ -18,24 +18,25 @@ const parseInput = (rawInput: string) => {
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  // Create 1000x1000 2D array
-  const MATRIX_SIZE = 1000;
-  const positions = [] as number[][];
+  const positions = [] as number[][]; // Positions are in [y][x] format
 
+  // Maximum X and Y points found in all lines
+  let maxX = -Infinity;
+  let maxY = -Infinity;
   input.forEach((line) => {
-    // Only consider horizontal and vertical lines
+    // Only consider non-diagonal (horizontal and vertical) lines, i.e. dx = 0 or dy = 0
     const isValidLine = line.x1 === line.x2 || line.y1 === line.y2;
     if (!isValidLine) return;
-    for (let y = 0; y <= MATRIX_SIZE; y++) {
-      for (let x = 0; x <= MATRIX_SIZE; x++) {
+
+    const { upperX, lowerX, upperY, lowerY } = getLineBounds(line);
+    if (upperX > maxX) maxX = upperX;
+    if (upperY > maxY) maxY = upperY;
+    for (let y = 0; y <= upperY; y++) {
+      for (let x = 0; x <= upperX; x++) {
         positions[y] ??= [];
         positions[y][x] ??= 0;
-        // Check if line intersects point (no diagonals)
-        const lowerX = Math.min(line.x1, line.x2);
-        const upperX = Math.max(line.x1, line.x2);
-        const lowerY = Math.min(line.y1, line.y2);
-        const upperY = Math.max(line.y1, line.y2);
-        if (x >= lowerX && x <= upperX && y >= lowerY && y <= upperY) {
+        // No lines are diagonal, so we can treat the line the same as a rectangle
+        if (isPointInBounds({ x, y, lowerX, upperX, lowerY, upperY })) {
           positions[y][x]++;
         }
       }
@@ -44,8 +45,8 @@ const part1 = (rawInput: string) => {
 
   // Count overlaps
   let numOverlaps = 0;
-  for (let y = 0; y <= MATRIX_SIZE; y++) {
-    for (let x = 0; x <= MATRIX_SIZE; x++) {
+  for (let y = 0; y <= maxY; y++) {
+    for (let x = 0; x <= maxX; x++) {
       if (positions[y][x] > 1) {
         numOverlaps++;
       }
@@ -57,30 +58,32 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  // Create 1000x1000 2D array
-  const MATRIX_SIZE = 1000;
   const positions = [] as number[][]; // Positions are in [y][x] format
 
+  // Maximum X and Y points found in all lines
+  let maxX = -Infinity;
+  let maxY = -Infinity;
   input.forEach((line) => {
+    const { upperX, lowerX, upperY, lowerY } = getLineBounds(line);
+    if (upperX > maxX) maxX = upperX;
+    if (upperY > maxY) maxY = upperY;
     const mb = getLineMB(line);
-    for (let y = 0; y <= MATRIX_SIZE; y++) {
-      for (let x = 0; x <= MATRIX_SIZE; x++) {
+    for (let y = 0; y <= upperY; y++) {
+      for (let x = 0; x <= upperX; x++) {
         positions[y] ??= [];
         positions[y][x] ??= 0;
-        const lowerX = Math.min(line.x1, line.x2);
-        const upperX = Math.max(line.x1, line.x2);
-        const lowerY = Math.min(line.y1, line.y2);
-        const upperY = Math.max(line.y1, line.y2);
+        // Check if line works with y = mx + b equation
         if (mb) {
           const { m, b } = mb;
           const isOnInfiniteLine = y === m * x + b;
           if (isOnInfiniteLine) {
-            // Check if point still in bounds
-            if (x >= lowerX && x <= upperX && y >= lowerY && y <= upperY) {
+            if (isPointInBounds({ x, y, lowerX, upperX, lowerY, upperY })) {
               positions[y][x]++;
             }
           }
-        } else if (x === line.x1 && y >= lowerY && y <= upperY) {
+        }
+        // Special case: handle lines that go straight downward
+        else if (x === line.x1 && y >= lowerY && y <= upperY) {
           positions[y][x]++;
         }
       }
@@ -89,8 +92,8 @@ const part2 = (rawInput: string) => {
 
   // Count overlaps
   let numOverlaps = 0;
-  for (let y = 0; y <= MATRIX_SIZE; y++) {
-    for (let x = 0; x <= MATRIX_SIZE; x++) {
+  for (let y = 0; y <= maxY; y++) {
+    for (let x = 0; x <= maxX; x++) {
       if (positions[y][x] > 1) {
         numOverlaps++;
       }
@@ -100,10 +103,34 @@ const part2 = (rawInput: string) => {
   return numOverlaps;
 };
 
+// Returns whether point (x,y) is inside bounds of rectangle
+function isPointInBounds(opts: {
+  x: number;
+  y: number;
+  lowerX: number;
+  upperX: number;
+  lowerY: number;
+  upperY: number;
+}) {
+  const { x, y, lowerX, upperX, lowerY, upperY } = opts;
+  return x >= lowerX && x <= upperX && y >= lowerY && y <= upperY;
+}
+
+function getLineBounds(line: Line) {
+  return {
+    lowerX: Math.min(line.x1, line.x2),
+    upperX: Math.max(line.x1, line.x2),
+    lowerY: Math.min(line.y1, line.y2),
+    upperY: Math.max(line.y1, line.y2),
+  };
+}
+
 // Returns the gradient (m) and y-intercept (b) of the provided line
 // Thank you Mr. Stoyef from Year 8 maths, I thought I would never use this
 function getLineMB(line: Line) {
-  if (line.x2 === line.x1) return null; // Return null if gradient would be undefined
+  // Turns out the whole y = mx + b equation doesn't work for lines that go straight down, so we can't return m & b
+  if (line.x2 === line.x1) return null;
+
   const m = (line.y2 - line.y1) / (line.x2 - line.x1);
   const b = line.y1 - m * line.x1;
   return { m, b };
