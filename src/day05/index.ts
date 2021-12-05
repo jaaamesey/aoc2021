@@ -1,3 +1,7 @@
+/*
+ * I'm sorry, this is really inefficient, but the ends justify the means
+ */
+
 import run from "aocrunner";
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
