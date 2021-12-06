@@ -3,25 +3,11 @@ import run from "aocrunner";
 const parseInput = (rawInput: string) =>
   rawInput.split(",").map((numStr) => parseInt(numStr));
 
-const part1 = (rawInput: string) => {
-  const input = parseInput(rawInput);
-  let currentFish = input.slice();
-  for (let day = 1; day <= 80; day++) {
-    const newCurrentFish: number[] = [];
-    for (const fishTimer of currentFish) {
-      let newFishTimer = fishTimer - 1;
-      if (newFishTimer < 0) {
-        newFishTimer = 6;
-        newCurrentFish.push(8); // New fish born
-      }
-      newCurrentFish.push(newFishTimer);
-    }
-    currentFish = newCurrentFish;
-  }
-  return currentFish.length;
-};
+const part1 = (rawInput: string) => countFish(rawInput, 80);
 
-const part2 = (rawInput: string) => {
+const part2 = (rawInput: string) => countFish(rawInput, 256);
+
+function countFish(rawInput: string, days: number) {
   const input = parseInput(rawInput);
   let currentFish = new Map<number, number>();
   input.forEach((number) => {
@@ -29,7 +15,7 @@ const part2 = (rawInput: string) => {
     currentFish.set(number, numberInMap + 1);
   });
 
-  for (let day = 1; day <= 256; day++) {
+  for (let day = 1; day <= days; day++) {
     const newCurrentFish = new Map<number, number>();
     for (const fishTimer of currentFish.keys()) {
       const fishAmt = currentFish.get(fishTimer);
@@ -47,12 +33,13 @@ const part2 = (rawInput: string) => {
     }
     currentFish = newCurrentFish;
   }
+
   let numFish = 0;
   for (const fishAmt of currentFish.values()) {
     numFish += fishAmt;
   }
   return numFish;
-};
+}
 
 const testInput = `3,4,3,1,2`;
 
