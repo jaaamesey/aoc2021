@@ -50,6 +50,8 @@ const part2 = (rawInput: string) => {
  * Applies the summation formula to the given number
  * e.g. summation(5) = 1 + 2 + 3 + 4 + 5 = 15
  * Stolen from https://math.stackexchange.com/a/60579
+ * This is also apparently referred to as the "triangular number" series, whatever that means:
+ * https://en.wikipedia.org/wiki/Triangular_number
  */
 function summation(n: number) {
   return (Math.pow(n, 2) + n) / 2;
