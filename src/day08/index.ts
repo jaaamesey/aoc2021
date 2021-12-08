@@ -74,11 +74,10 @@ const part2 = (rawInput: string) => {
       return true;
     })[0];
 
-    // 5 = only 5-length number that isn't 3 that has all its parts inside 6
+    // 5 = only 5-length number that has all its parts inside 6
     knownValues[5] = signalPatterns.filter((n) => {
       const six = knownValues[6];
       if (n.length !== 5) return false;
-      if (n === knownValues[3]) return false;
       for (const char of n) {
         if (!six.includes(char)) return false;
       }
