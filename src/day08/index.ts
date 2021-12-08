@@ -1,31 +1,31 @@
 import run from "aocrunner";
 
 const parseInput1 = (rawInput: string) => {
-  const allOutputValues: string[] = []
-  const input = rawInput.split('\n');
+  const allOutputValues: string[] = [];
+  const input = rawInput.split("\n");
   input.forEach((entry) => {
-    const [, outputValuesRaw] = entry.split(' | ');
-    const outputValues = outputValuesRaw.split(' ');
+    const [, outputValuesRaw] = entry.split(" | ");
+    const outputValues = outputValuesRaw.split(" ");
     outputValues.forEach((val) => allOutputValues.push(val));
-  })
-  return allOutputValues
+  });
+  return allOutputValues;
 };
 
 const parseInput2 = (rawInput: string) => {
-  const input = rawInput.split('\n');
+  const input = rawInput.split("\n");
   return input.map((entry) => {
-    const [signalPatternsRaw, outputValuesRaw] = entry.split(' | ');
-    const signalPatterns = signalPatternsRaw.split(' ').map(sortString)
-    const outputValues = outputValuesRaw.split(' ').map(sortString)
-    return { signalPatterns, outputValues }
-  })
+    const [signalPatternsRaw, outputValuesRaw] = entry.split(" | ");
+    const signalPatterns = signalPatternsRaw.split(" ").map(sortString);
+    const outputValues = outputValuesRaw.split(" ").map(sortString);
+    return { signalPatterns, outputValues };
+  });
 };
 
-const SEGMENT_LENGTHS = [6, 2, 5, 4, 4, 5, 6, 3, 7, 6]
+const SEGMENT_LENGTHS = [6, 2, 5, 4, 4, 5, 6, 3, 7, 6];
 const LENGTH_TO_NUMBER = new Map<number, number>();
 [1, 4, 7, 8].forEach((n) => {
-  LENGTH_TO_NUMBER.set(SEGMENT_LENGTHS[n], n)
-})
+  LENGTH_TO_NUMBER.set(SEGMENT_LENGTHS[n], n);
+});
 
 const part1 = (rawInput: string) => {
   const outputValues = parseInput1(rawInput);
@@ -44,7 +44,7 @@ const part2 = (rawInput: string) => {
   const entries = parseInput2(rawInput);
   let outputSum = 0;
   entries.forEach(({ signalPatterns, outputValues }) => {
-    const knownValues: string[] = []
+    const knownValues: string[] = [];
 
     // Fill known number patterns
     signalPatterns.forEach((pattern) => {
@@ -52,7 +52,7 @@ const part2 = (rawInput: string) => {
       if (knownNumber != null) {
         knownValues[knownNumber] = pattern;
       }
-    })
+    });
 
     //
     // "a little deduction"
@@ -64,7 +64,7 @@ const part2 = (rawInput: string) => {
       if (n.length !== 6) return false;
       if (n.includes(one[0]) && n.includes(one[1])) return false;
       return true;
-    })[0]
+    })[0];
 
     // 3 = only 5-length number that contains all parts of 1
     knownValues[3] = signalPatterns.filter((n) => {
@@ -82,14 +82,14 @@ const part2 = (rawInput: string) => {
         if (!six.includes(char)) return false;
       }
       return true;
-    })[0]
+    })[0];
 
     // 2 = only 5-length number that isn't 3 or 5
     knownValues[2] = signalPatterns.filter((n) => {
       if (n.length !== 5) return false;
       if (n === knownValues[3] || n === knownValues[5]) return false;
       return true;
-    })[0]
+    })[0];
 
     // 9 = only 6-length number that has all parts of 4 inside it
     knownValues[9] = signalPatterns.filter((n) => {
@@ -106,25 +106,28 @@ const part2 = (rawInput: string) => {
       if (n.length !== 6) return false;
       if (n === knownValues[6] || n === knownValues[9]) return false;
       return true;
-    })[0]
+    })[0];
 
     // All number patterns are known, now it's time to map them and sum the output 😎
     const patternToNumber = new Map<string, number>();
-    knownValues.forEach((pattern, number) => patternToNumber.set(pattern, number))
+    knownValues.forEach((pattern, number) =>
+      patternToNumber.set(pattern, number),
+    );
 
-    let output = ''
+    let output = "";
     outputValues.forEach((val) => {
-      val = sortString(val)
+      val = sortString(val);
       output += patternToNumber.get(val);
-      if (patternToNumber.get(val) == null) throw `Couldn't find number for pattern ${val}`
-    })
+      if (patternToNumber.get(val) == null)
+        throw `Couldn't find number for pattern ${val}`;
+    });
     outputSum += parseInt(output);
-  })
+  });
   return outputSum;
 };
 
 function sortString(str: string) {
-  return str.split('').sort().join('');
+  return str.split("").sort().join("");
 }
 
 const testInput = `be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
@@ -144,9 +147,7 @@ run({
     solution: part1,
   },
   part2: {
-    tests: [
-      { input: testInput, expected: 61229 },
-    ],
+    tests: [{ input: testInput, expected: 61229 }],
     solution: part2,
   },
   trimTestInputs: true,
