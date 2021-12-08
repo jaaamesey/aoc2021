@@ -39,13 +39,14 @@ const part1 = (rawInput: string) => {
   return count;
 };
 
+// This is probably extremely inefficient, but it runs in < 7ms so 🤷
 const part2 = (rawInput: string) => {
   const entries = parseInput2(rawInput);
   let outputSum = 0;
   entries.forEach(({ signalPatterns, outputValues }) => {
-    let knownValues: string[] = []
+    const knownValues: string[] = []
 
-    // Fill with known number patterns
+    // Fill known number patterns
     signalPatterns.forEach((pattern) => {
       const knownNumber = LENGTH_TO_NUMBER.get(pattern.length);
       if (knownNumber != null) {
@@ -53,28 +54,28 @@ const part2 = (rawInput: string) => {
       }
     })
 
-    // 6 = only 6-length number that doesn't contain all chars in 1
-    const possibleSixes = signalPatterns.filter((n) => {
+    //
+    // "a little deduction"
+    //
+
+    // 6 = only 6-length number that doesn't contain all parts of 1
+    knownValues[6] = signalPatterns.filter((n) => {
       const one = knownValues[1];
       if (n.length !== 6) return false;
       if (n.includes(one[0]) && n.includes(one[1])) return false;
       return true;
-    });
-    if (possibleSixes.length !== 1) throw 'Should only be 1 possible 6, instead found ' + possibleSixes.length
-    knownValues[6] = possibleSixes[0];
+    })[0]
 
-    // 3 = only 5-length number that has all parts of 1
-    const possibleThrees = signalPatterns.filter((n) => {
+    // 3 = only 5-length number that contains all parts of 1
+    knownValues[3] = signalPatterns.filter((n) => {
       const one = knownValues[1];
       if (n.length !== 5) return false;
       if (!n.includes(one[0]) || !n.includes(one[1])) return false;
       return true;
-    });
-    if (possibleThrees.length !== 1) throw 'Should only be 1 possible 3, instead found ' + possibleThrees.length
-    knownValues[3] = possibleThrees[0];
+    })[0];
 
-    // 5 = only 5-length number that isn't 3 that has all its parts in 6
-    const possibleFives = signalPatterns.filter((n) => {
+    // 5 = only 5-length number that isn't 3 that has all its parts inside 6
+    knownValues[5] = signalPatterns.filter((n) => {
       const six = knownValues[6];
       if (n.length !== 5) return false;
       if (n === knownValues[3]) return false;
@@ -82,41 +83,33 @@ const part2 = (rawInput: string) => {
         if (!six.includes(char)) return false;
       }
       return true;
-    });
-    if (possibleFives.length !== 1) throw 'Should only be 1 possible 5, instead found ' + possibleFives.length
-    knownValues[5] = possibleFives[0];
+    })[0]
 
     // 2 = only 5-length number that isn't 3 or 5
-    const possibleTwos = signalPatterns.filter((n) => {
+    knownValues[2] = signalPatterns.filter((n) => {
       if (n.length !== 5) return false;
       if (n === knownValues[3] || n === knownValues[5]) return false;
       return true;
-    });
-    if (possibleTwos.length !== 1) throw 'Should only be 1 possible 2, instead found ' + possibleTwos.length
-    knownValues[2] = possibleTwos[0];
-
+    })[0]
 
     // 9 = only 6-length number that has all parts of 4 inside it
-    const possibleNines = signalPatterns.filter((n) => {
+    knownValues[9] = signalPatterns.filter((n) => {
       const four = knownValues[4];
       if (n.length !== 6) return false;
       for (const char of four) {
         if (!n.includes(char)) return false;
       }
       return true;
-    });
-    if (possibleNines.length !== 1) throw 'Should only be 1 possible 9, instead found ' + possibleNines.length
-    knownValues[9] = possibleNines[0];
+    })[0];
 
     // 0 = only 6-length number that isn't 6 or 9
-    const possibleZeroes = signalPatterns.filter((n) => {
+    knownValues[0] = signalPatterns.filter((n) => {
       if (n.length !== 6) return false;
       if (n === knownValues[6] || n === knownValues[9]) return false;
       return true;
-    });
-    if (possibleZeroes.length !== 1) throw 'Should only be 1 possible 0, instead found ' + possibleZeroes.length
-    knownValues[0] = possibleZeroes[0];
+    })[0]
 
+    // All number patterns are known, now it's time to map them and sum the output 😎
     const patternToNumber = new Map<string, number>();
     knownValues.forEach((pattern, number) => patternToNumber.set(pattern, number))
 
