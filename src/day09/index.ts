@@ -16,9 +16,10 @@ const part1 = (rawInput: string) => {
         if (adj.val <= val) isDip = false;
       });
 
-      if (!isDip) continue;
-      const riskLevel = 1 + val;
-      riskLevelSum += riskLevel;
+      if (isDip) {
+        const riskLevel = 1 + val;
+        riskLevelSum += riskLevel;
+      }
     }
   }
   return riskLevelSum;
@@ -38,10 +39,10 @@ const part2 = (rawInput: string) => {
         if (adj.val <= val) isDip = false;
       });
 
-      if (!isDip) continue;
-
-      const basin = getBasin(input, y, x);
-      basinCounts.push(basin.length);
+      if (isDip) {
+        const basin = getBasin(input, y, x);
+        basinCounts.push(basin.length);
+      }
     }
   }
   // Return product of 3 largest basins
