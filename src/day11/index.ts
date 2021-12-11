@@ -21,6 +21,7 @@ const part2 = (rawInput: string) => {
 function runSteps(
   input: string[],
   numSteps: number,
+  // Callback that runs when a step is completed. If `true` is returned in the callback, step execution will stop.
   onStepCompleted?: (flashedPositions: Set<string>) => boolean | undefined,
 ) {
   let totalFlashes = 0;
