@@ -5,68 +5,45 @@ const parseInput = (rawInput: string) => rawInput.split("\n");
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  let totalFlashes = 0;
-  for (let step = 0; step < 100; step++) {
-    const flashedPositions = new Set<string>();
-    function incrementOctopus(y: number, x: number) {
-      const val = parseInt(input[y][x]);
-      let newVal = val >= 9 ? 0 : val + 1;
-      if (flashedPositions.has(`${y},${x}`)) {
-        return;
-      }
-
-      const newRow = input[y].split("");
-      newRow[x] = newVal.toString();
-      input[y] = newRow.join("");
-      if (newVal === 0) {
-        // FLASHING!
-        totalFlashes++;
-        flashedPositions.add(`${y},${x}`);
-        const adjacentVals = getAdjacentVals(input, y, x);
-        Object.values(adjacentVals).forEach((adj) => {
-          if (adj.val == null) return;
-          incrementOctopus(adj.y, adj.x);
-        });
-      }
-    }
-    for (let y = 0; y < input.length; y++) {
-      const row = input[y];
-      for (let x = 0; x < row.length; x++) {
-        incrementOctopus(y, x);
-      }
-    }
-    flashedPositions.forEach((val) => {
-      const [y, x] = val.split(",").map(parseInt);
-      const newRow = input[y].split("");
-      newRow[x] = "0";
-      input[y] = newRow.join("");
-    });
-  }
-
-  return totalFlashes;
+  return runSteps(input, 100).totalFlashes;
 };
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  for (let step = 0; ; step++) {
-    let flashesInStep = 0;
+  const OCTOPUS_COUNT = input.length * input[0].length;
+  const { step } = runSteps(input, Infinity, (flashedPositions) => {
+    if (flashedPositions.size >= OCTOPUS_COUNT) {
+      return true; // Halt
+    }
+  });
+  return step;
+};
+
+function runSteps(
+  input: string[],
+  numSteps: number,
+  onStepCompleted?: (flashedPositions: Set<string>) => boolean | undefined,
+) {
+  let totalFlashes = 0;
+  for (let step = 1; step <= numSteps; step++) {
     const flashedPositions = new Set<string>();
     function incrementOctopus(y: number, x: number) {
-      const val = parseInt(input[y][x]);
-      let newVal = val >= 9 ? 0 : val + 1;
       if (flashedPositions.has(`${y},${x}`)) {
         return;
       }
 
+      const val = parseInt(input[y][x]);
+      let newVal = val >= 9 ? 0 : val + 1;
+
       const newRow = input[y].split("");
       newRow[x] = newVal.toString();
       input[y] = newRow.join("");
+
       if (newVal === 0) {
         // FLASHING!
-        flashesInStep++;
         flashedPositions.add(`${y},${x}`);
-        const adjacentVals = getAdjacentVals(input, y, x);
-        Object.values(adjacentVals).forEach((adj) => {
+        totalFlashes++;
+        getAdjacentPositions(input, y, x).forEach((adj) => {
           if (adj.val == null) return;
           incrementOctopus(adj.y, adj.x);
         });
@@ -84,31 +61,29 @@ const part2 = (rawInput: string) => {
       newRow[x] = "0";
       input[y] = newRow.join("");
     });
-    const OCTOPUS_COUNT = input.length * input[0].length;
-    if (flashesInStep >= OCTOPUS_COUNT) {
-      return step + 1;
-    }
+    const halt = onStepCompleted?.(flashedPositions);
+    if (halt) return { totalFlashes, step };
   }
-};
+  return { totalFlashes, step: numSteps };
+}
 
-function getAdjacentVals(input: string[], y: number, x: number) {
-  const upY = y - 1;
-  const downY = y + 1;
-  const leftX = x - 1;
-  const rightX = x + 1;
-  function cleanVal(numStr?: string) {
-    return numStr ? parseInt(numStr) : null;
+function getAdjacentPositions(input: string[], y: number, x: number) {
+  function getPos(dy: number, dx: number) {
+    function cleanVal(numStr?: string) {
+      return numStr ? parseInt(numStr) : null;
+    }
+    return { val: cleanVal(input[y + dy]?.[x + dx]), y: y + dy, x: x + dx };
   }
-  return {
-    leftUp: { val: cleanVal(input[upY]?.[leftX]), y: upY, x: leftX },
-    rightUp: { val: cleanVal(input[upY]?.[rightX]), y: upY, x: rightX },
-    rightDown: { val: cleanVal(input[downY]?.[rightX]), y: downY, x: rightX },
-    leftDown: { val: cleanVal(input[downY]?.[leftX]), y: downY, x: leftX },
-    up: { val: cleanVal(input[upY]?.[x]), y: upY, x },
-    down: { val: cleanVal(input[downY]?.[x]), y: downY, x },
-    left: { val: cleanVal(input[y][leftX]), y, x: leftX },
-    right: { val: cleanVal(input[y][rightX]), y, x: rightX },
-  };
+  return [
+    getPos(1, -1),
+    getPos(1, 0),
+    getPos(1, 1),
+    getPos(-1, -1),
+    getPos(-1, 0),
+    getPos(-1, 1),
+    getPos(0, -1),
+    getPos(0, 1),
+  ];
 }
 
 const testInput = `5483143223
