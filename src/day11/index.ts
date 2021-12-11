@@ -11,12 +11,11 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const OCTOPUS_COUNT = input.length * input[0].length;
-  const { step } = runSteps(input, Infinity, (flashedPositions) => {
+  return runSteps(input, Infinity, (flashedPositions) => {
     if (flashedPositions.size >= OCTOPUS_COUNT) {
       return true; // Halt
     }
-  });
-  return step;
+  }).step;
 };
 
 function runSteps(
