@@ -1,4 +1,3 @@
-// This is awful but it's Saturday so 🤷‍♂️
 import run from "aocrunner";
 
 const parseInput = (rawInput: string) => rawInput.split("\n");

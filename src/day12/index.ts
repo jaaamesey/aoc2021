@@ -6,7 +6,7 @@ type Point = {
   type: "cave" | "small_cave" | "start" | "end";
 };
 
-// Whilst this implementation is a directed graph, for this task, edges will be duplicated
+// Whilst this implementation is a *directed* graph, for this task, edges will be duplicated
 // in a way where this effectively ends up as an undirected graph.
 class DirectedGraph extends Map<string, Point> {
   get start() {
@@ -22,10 +22,8 @@ class DirectedGraph extends Map<string, Point> {
 }
 
 function getTypeFromKey(key: string): Point["type"] {
-  if (key === "start") {
-    return "start";
-  } else if (key === "end") {
-    return "end";
+  if (key === "start" || key === "end") {
+    return key;
   } else if (key === key.toUpperCase()) {
     return "cave";
   } else if (key === key.toLowerCase()) {
@@ -94,6 +92,7 @@ const part2 = (rawInput: string) => {
   graph.forEach((point) => {
     if (point.type === "small_cave") smallCaves.push(point);
   });
+
   // Store explored paths in a set, as running a search for each small cave will result in duplicates.
   const exploredPaths = new Set<string>();
   // For each small cave, do pretty much the same thing as part 1, but treat the current small cave as "special" in
