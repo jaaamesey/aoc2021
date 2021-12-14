@@ -1,3 +1,5 @@
+// This is awful, I'm sorry
+
 import run from "aocrunner";
 
 const parseInput = (rawInput: string) => {
@@ -6,11 +8,6 @@ const parseInput = (rawInput: string) => {
   pairInsertionRulesStr.split("\n").forEach((str) => {
     const [pairStr, elementToInsert] = str.split(" -> ");
     pairInsertionRules.set(pairStr, elementToInsert);
-    // return {
-    //   left: pairStr[0],
-    //   right: pairStr[1],
-    //   elementToInsert,
-    // };
   });
   return { polymerTemplate, pairInsertionRules };
 };
@@ -24,26 +21,61 @@ const part2 = (rawInput: string) => {
 };
 
 function getAnswer(rawInput: string, numSteps: number) {
-  let { polymerTemplate, pairInsertionRules } = parseInput(rawInput);
-  // Apply insertion rules to polymer template for numSteps
-  for (let i = 1; i <= numSteps; i++) {
-    let newPolymerTemplate = "";
-    for (let c = 0; c < polymerTemplate.length; c++) {
-      const pair = polymerTemplate[c] + polymerTemplate[c + 1];
-      const elementToInsert = pairInsertionRules.get(pair);
-      if (elementToInsert) {
-        newPolymerTemplate += polymerTemplate[c] + elementToInsert;
-      } else {
-        newPolymerTemplate += polymerTemplate[c];
-      }
+  const { polymerTemplate, pairInsertionRules } = parseInput(rawInput);
+
+  // You might think memoizing this function is a micro-optimization, but NO.
+  // Without memoizing solvePair(), 40 steps will take some ridiculous amount of time
+  // (potentially infinite, nothing happened after running it for 30m), instead of ~7ms.
+  const solvePairMemo = new Map<
+    `${string},${number}`,
+    ReadonlyMap<string, number>
+  >();
+
+  function solvePair(pair: string, steps: number) {
+    const memoized = solvePairMemo.get(`${pair},${steps}`);
+    if (memoized) {
+      return memoized;
     }
-    polymerTemplate = newPolymerTemplate;
+
+    const elementCounts = new Map<string, number>();
+    if (steps <= 0) {
+      return elementCounts as ReadonlyMap<string, number>;
+    }
+
+    const newElement = pairInsertionRules.get(pair);
+    if (!newElement) throw new Error("Rule not found for " + newElement);
+
+    const currentCount = elementCounts.get(newElement) ?? 0;
+    elementCounts.set(newElement, currentCount + 1);
+
+    const pairA = pair[0] + newElement;
+    const pairB = newElement + pair[1];
+
+    const mapCountsToTotal = (count: number, element: string) => {
+      const currentCount = elementCounts.get(element) ?? 0;
+      elementCounts.set(element, currentCount + count);
+    };
+    solvePair(pairA, steps - 1).forEach(mapCountsToTotal);
+    solvePair(pairB, steps - 1).forEach(mapCountsToTotal);
+
+    solvePairMemo.set(`${pair},${steps}`, elementCounts);
+    return elementCounts as ReadonlyMap<string, number>;
   }
 
   const elementCounts = new Map<string, number>();
-  for (const element of polymerTemplate) {
-    const currentCount = elementCounts.get(element) ?? 0;
-    elementCounts.set(element, currentCount + 1);
+  for (let c = 0; c < polymerTemplate.length; c++) {
+    // Set up initial element count
+    const currentCount = elementCounts.get(polymerTemplate[c]) ?? 0;
+    elementCounts.set(polymerTemplate[c], currentCount + 1);
+    // For each pair of elements in the array, add counts for the additional
+    // elements that would be inserted after the provided number of steps.
+    if (c < polymerTemplate.length - 1) {
+      const pair = polymerTemplate[c] + polymerTemplate[c + 1];
+      solvePair(pair, numSteps).forEach((count, element) => {
+        const currentCount = elementCounts.get(element) ?? 0;
+        elementCounts.set(element, currentCount + count);
+      });
+    }
   }
 
   let maxElementCount = -Infinity;
@@ -52,6 +84,7 @@ function getAnswer(rawInput: string, numSteps: number) {
     if (elementCount < minElementCount) minElementCount = elementCount;
     if (elementCount > maxElementCount) maxElementCount = elementCount;
   });
+
   return maxElementCount - minElementCount;
 }
 
@@ -84,5 +117,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  //onlyTests: true,
 });
