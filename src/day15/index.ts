@@ -1,5 +1,6 @@
 import run from "aocrunner";
-import PriorityQueue from "fastpriorityqueue";
+// It took me so long to find a heap/priority queue library that actually worked for this???
+import { FibonacciHeap, INode } from "@tyriar/fibonacci-heap";
 
 type Pos = `${number},${number}`; // x,y format
 type Point = {
@@ -47,12 +48,12 @@ const parseInput = (rawInput: string, extendByFive = false) => {
         }
       }
     }
+    // Extend all rows horizontally
     for (let y = 0; y < rows.length; y++) {
       for (let i = 1; i < 5; i++) {
         for (let x = 0; x < originalWidth; x++) {
           const offsetX = i * originalWidth;
           const originalValue = rows[y][x];
-          if (isNaN(originalValue)) throw JSON.stringify({ y, x });
           let newValue = originalValue + i;
           if (newValue > 9) newValue = newValue % 9;
           rows[y][x + offsetX] = newValue;
@@ -103,39 +104,40 @@ function getAdjacentPositions(input: number[][], y: number, x: number): Pos[] {
 
 function dijkstra(graph: DirectedGraph, rows: number[][], source: Point) {
   const distances = new Map<Pos, number>();
-  const queue: Pos[] = [];
-
+  const queue = new FibonacciHeap<number, Pos>();
+  const queueNodes = new Map<Pos, INode<number, Pos>>();
   distances.set(source.pos, 0);
   graph.forEach((point) => {
     if (point.pos !== source.pos) {
       distances.set(point.pos, Infinity);
     }
-    queue.push(point.pos);
+    queueNodes.set(
+      point.pos,
+      queue.insert(distances.get(point.pos)!, point.pos),
+    );
   });
 
-  let queueNeedsSort = true;
-  while (queue.length) {
-    queueNeedsSort &&
-      queue.sort((a, b) => distances.get(b)! - distances.get(a)!);
-    queueNeedsSort = false;
-
-    const pointU = graph.get(queue.pop()!);
+  while (!queue.isEmpty()) {
+    const pointU = graph.get(queue.extractMinimum()?.value!);
     if (!pointU) throw new Error();
+    queueNodes.delete(pointU.pos);
     const pointUAdjacentPositions = getAdjacentPositions(
       rows,
       pointU.y,
       pointU.x,
     );
-
     pointUAdjacentPositions.forEach((posV) => {
-      if (!queue.includes(posV)) return;
+      if (!queueNodes.has(posV)) return;
       const uDistance = distances.get(pointU.pos);
       const pointV = graph.get(posV);
       if (uDistance == null || pointV == null) throw new Error();
+
       const alt = uDistance + pointV.risk;
       if (alt < distances.get(posV)!) {
         distances.set(posV, alt);
-        queueNeedsSort = true;
+        const node = queueNodes.get(posV);
+        if (!node) throw new Error();
+        queue.decreaseKey(node, alt);
       }
     });
   }
