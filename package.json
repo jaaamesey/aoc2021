@@ -21,5 +21,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "dijkstrajs": "^1.0.2",
+    "fastpriorityqueue": "^0.7.1"
   }
 }
